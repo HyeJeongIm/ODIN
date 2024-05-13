@@ -26,6 +26,8 @@ import time
 from scipy import misc
 import calMetric as m
 import calData as d
+
+import ipdb
 #CUDA_DEVICE = 0
 
 start = time.time()
@@ -54,28 +56,33 @@ transform = transforms.Compose([
 
 criterion = nn.CrossEntropyLoss()
 
-
-
+# nnName: args.nn
+# dataNate: args.out_dataset
+# epsilon: args.magnitude
 def test(nnName, dataName, CUDA_DEVICE, epsilon, temperature):
     
     net1 = torch.load("../models/{}.pth".format(nnName))
     optimizer1 = optim.SGD(net1.parameters(), lr = 0, momentum = 0)
     net1.cuda(CUDA_DEVICE)
     
+    # OOD
     if dataName != "Uniform" and dataName != "Gaussian":
+        print("OOD")
         testsetout = torchvision.datasets.ImageFolder("../data/{}".format(dataName), transform=transform)
         testloaderOut = torch.utils.data.DataLoader(testsetout, batch_size=1,
                                          shuffle=False, num_workers=2)
 
+    # ID
     if nnName == "densenet10" or nnName == "wideresnet10": 
-	testset = torchvision.datasets.CIFAR10(root='../data', train=False, download=True, transform=transform)
-	testloaderIn = torch.utils.data.DataLoader(testset, batch_size=1,
-                                         shuffle=False, num_workers=2)
+        print("ID")
+        testset = torchvision.datasets.CIFAR10(root='../data', train=False, download=True, transform=transform)
+        testloaderIn = torch.utils.data.DataLoader(testset, batch_size=1,
+                                            shuffle=False, num_workers=2)
     if nnName == "densenet100" or nnName == "wideresnet100": 
-	testset = torchvision.datasets.CIFAR100(root='../data', train=False, download=True, transform=transform)
-	testloaderIn = torch.utils.data.DataLoader(testset, batch_size=1,
-                                         shuffle=False, num_workers=2)
-    
+        testset = torchvision.datasets.CIFAR100(root='../data', train=False, download=True, transform=transform)
+        testloaderIn = torch.utils.data.DataLoader(testset, batch_size=1,
+                                            shuffle=False, num_workers=2)
+
     if dataName == "Gaussian":
         d.testGaussian(net1, criterion, CUDA_DEVICE, testloaderIn, testloaderIn, nnName, dataName, epsilon, temperature)
         m.metric(nnName, dataName)
@@ -84,8 +91,8 @@ def test(nnName, dataName, CUDA_DEVICE, epsilon, temperature):
         d.testUni(net1, criterion, CUDA_DEVICE, testloaderIn, testloaderIn, nnName, dataName, epsilon, temperature)
         m.metric(nnName, dataName)
     else:
-	d.testData(net1, criterion, CUDA_DEVICE, testloaderIn, testloaderOut, nnName, dataName, epsilon, temperature) 
-	m.metric(nnName, dataName)
+        d.testData(net1, criterion, CUDA_DEVICE, testloaderIn, testloaderOut, nnName, dataName, epsilon, temperature) 
+        m.metric(nnName, dataName)
 
 
 
