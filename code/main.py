@@ -30,6 +30,7 @@ import time
 #import lmdb
 from scipy import misc
 import cal as c
+import random
 
 
 parser = argparse.ArgumentParser(description='Pytorch Detecting Out-of-distribution examples in neural networks')
@@ -45,10 +46,6 @@ parser.add_argument('--temperature', default=1000, type=int,
 parser.add_argument('--gpu', default = 0, type = int,
 		    help='gpu index')
 parser.set_defaults(argument=True)
-
-
-
-
 
 # Setting the name of neural networks
 
@@ -75,9 +72,22 @@ parser.set_defaults(argument=True)
 
 # Setting the temperature
 #temperature = 1000
+
+def set_seed(seed=42):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)  # 멀티 GPU 사용 시
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
 def main():
     global args
     args = parser.parse_args()
+
+    set_seed(42)
+    print(args.gpu)
     c.test(args.nn, args.out_dataset, args.gpu, args.magnitude, args.temperature)
 
 if __name__ == '__main__':
